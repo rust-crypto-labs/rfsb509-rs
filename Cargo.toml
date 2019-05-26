@@ -1,0 +1,9 @@
+[package]
+name = "rfsb509-rs"
+version = "0.1.0"
+authors = ["Rémi Géraud-Stewart"]
+edition = "2018"
+licence= "MIT"
+
+[dependencies]
+rust-crypto = "*"
