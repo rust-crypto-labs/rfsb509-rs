@@ -1,6 +1,8 @@
-extern crate crypto;
+extern crate aes;
 
-use crypto::{aes::KeySize::KeySize128, aesni, symmetriccipher::BlockEncryptor, util};
+use aes::block_cipher_trait::generic_array::GenericArray;
+use aes::block_cipher_trait::BlockCipher;
+use aes::Aes128;
 
 use std::convert::AsMut;
 
@@ -14,28 +16,24 @@ fn copy_into_array<A: Default + AsMut<[T]>, T: Copy>(slice: &[T]) -> A {
 // Generate the RFSB-509 matrix
 fn genmatrix() -> [u8; 16384] {
     // All zero AES key
-    let zero_key = [0x00; 16];
+    let zero_key = GenericArray::from_slice(&[0u8; 16]);
 
     let mut matrix = vec![];
     let mut result = [0x00; 16384];
 
-    if util::supports_aesni() {
-        println!("AES-NI supported");
-
-        let enc = aesni::AesNiEncryptor::new(KeySize128, &zero_key);
+    let enc = Aes128::new(&zero_key);
 
         for j in 0..=255 {
             let mut blocks = vec![];
 
             for k in 0..4 {
-                let mut tmp = [0x00 as u8; 16];
-                let mut col = [0x00 as u8; 16];
+                let mut col = GenericArray::clone_from_slice(&[0u8; 16]);
 
                 col[0] = k;
                 col[1] = j;
 
-                enc.encrypt_block(&col, &mut tmp);
-                blocks.push(tmp);
+                enc.encrypt_block(&mut col);
+                blocks.push(col);
             }
 
             let first = blocks[0][0] ^ (blocks[3][15] >> 5);
@@ -44,16 +42,12 @@ fn genmatrix() -> [u8; 16384] {
 
             matrix.push(blocks);
         }
-    } else {
-        println!("AES-NI not supported");
-        // TODO: use a non-NI AES
-    }
 
     let mut ctr = 0;
     for line in matrix {
         for block in line {
-            for entry in &block {
-                result[ctr] = *entry;
+            for entry in block {
+                result[ctr] = entry;
                 ctr += 1;
             }
         }
@@ -204,6 +198,4 @@ fn main() {
     let test_string = b"Hi there how is life?";
 
     let result = hash(&test_string[..], &matrix);
-
-    // result now contains the hashed block.
 }
