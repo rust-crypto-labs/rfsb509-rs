@@ -1,9 +1,21 @@
 [package]
-name = "rfsb509-rs"
-version = "0.1.0"
 authors = ["Rémi Géraud-Stewart"]
-edition = "2018"
-license= "MIT"
+edition = "2021"
+license = "MIT"
+name = "rfsb509-rs"
+version = "0.2.0"
+
+[lib]
+name = "rfsb509"
+path = "src/lib.rs"
 
 [dependencies]
-aes = "0.3"
+generic-array = "0.14"
+sha2 = {version = "0.10", features = ["compress", "asm"]}
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+harness = false
+name = "benchmark"
